@@ -35,6 +35,8 @@ Usage of start:
         check propose metrics (default true)
   -check-validator-set
         check validator set metrics (default true)
+  -exporter-port string
+        metrics listen port (default "9123")
   -log-from-start
         start reading log from beginning (default: false)
   -log-path string
