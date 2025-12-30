@@ -88,9 +88,12 @@ func (t *LogTailer) Start(ctx context.Context) error {
 
 		line, err := t.reader.ReadBytes('\n')
 		if len(line) > 0 {
-			t.cfg.Metrics.HandleLine(string(line))
-			if _, werr := t.cfg.Output.Write(line); werr != nil {
-				return werr
+			lineStr := string(line)
+			t.cfg.Metrics.HandleLine(lineStr)
+			if isTargetLogLine(lineStr) {
+				if _, werr := t.cfg.Output.Write(line); werr != nil {
+					return werr
+				}
 			}
 			t.offset += int64(len(line))
 		}
@@ -175,6 +178,10 @@ func inodeFromInfo(info os.FileInfo) (uint64, error) {
 		return 0, fmt.Errorf("failed to read inode info")
 	}
 	return stat.Ino, nil
+}
+
+func isTargetLogLine(line string) bool {
+	return strings.Contains(line, "Propose, seq:") || strings.Contains(line, "endorse seq ")
 }
 
 func (m *LogMetrics) HandleLine(line string) {
