@@ -22,9 +22,9 @@ func runStart(args []string) error {
 	myBlsKey := fs.String("my-bls-key", "", "my BLS pubkey (0x...)")
 	checkBlockProof := fs.Bool("check-block-proof", true, "check signedBlsKeys trigger")
 	checkValidatorSet := fs.Bool("check-validator-set", true, "check validator set trigger")
-	pollInterval := fs.Duration("poll-interval", 1*time.Second, "poll interval for latest block")
 	logPath := fs.String("log-path", "", "path to log file to tail")
-	logFromStart := fs.Bool("log-from-start", false, "start reading log from beginning")
+	logFromStart := fs.Bool("log-from-start", false, "start reading log from beginning (default: false)")
+	rpcPollInterval := fs.Duration("rpc-poll-interval", time.Second, "poll interval for latest block")
 	logPollInterval := fs.Duration("log-poll-interval", time.Second, "poll interval for log tailing")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -43,7 +43,7 @@ func runStart(args []string) error {
 		MyBlsKey:          *myBlsKey,
 		CheckBlockProof:   *checkBlockProof,
 		CheckValidatorSet: *checkValidatorSet,
-		PollInterval:      *pollInterval,
+		PollInterval:      *rpcPollInterval,
 	})
 	if err != nil {
 		return err
