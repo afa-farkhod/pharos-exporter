@@ -17,6 +17,8 @@ type LogTailerConfig struct {
 	Output       io.Writer
 	FromStart    bool
 	Metrics      *LogMetrics
+	CheckPropose bool
+	CheckEndorse bool
 }
 
 type LogTailer struct {
@@ -32,6 +34,8 @@ type LogMetrics struct {
 	lastProposeUnix int64
 	endorseTotal    uint64
 	lastEndorseUnix int64
+	checkPropose    bool
+	checkEndorse    bool
 }
 
 func NewLogTailer(cfg LogTailerConfig) (*LogTailer, error) {
@@ -47,6 +51,8 @@ func NewLogTailer(cfg LogTailerConfig) (*LogTailer, error) {
 	if cfg.Metrics == nil {
 		cfg.Metrics = NewLogMetrics()
 	}
+	cfg.Metrics.checkPropose = cfg.CheckPropose
+	cfg.Metrics.checkEndorse = cfg.CheckEndorse
 	return &LogTailer{cfg: cfg}, nil
 }
 
@@ -174,6 +180,9 @@ func (m *LogMetrics) UpdateAndFormat(line string) []string {
 	ts := parseLogTimestamp(line)
 
 	if strings.Contains(line, "Propose, seq:") {
+		if !m.checkPropose {
+			return nil
+		}
 		m.proposeTotal++
 		m.lastProposeUnix = ts
 		return []string{
@@ -183,6 +192,9 @@ func (m *LogMetrics) UpdateAndFormat(line string) []string {
 	}
 
 	if strings.Contains(line, "endorse seq ") {
+		if !m.checkEndorse {
+			return nil
+		}
 		m.endorseTotal++
 		m.lastEndorseUnix = ts
 		return []string{

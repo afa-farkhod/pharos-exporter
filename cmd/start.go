@@ -20,8 +20,10 @@ func runStart(args []string) error {
 
 	rpcURL := fs.String("rpc", "https://atlantic-rpc.dplabs-internal.com/", "JSON-RPC endpoint")
 	myBlsKey := fs.String("my-bls-key", "", "my BLS pubkey (0x...)")
-	checkBlockProof := fs.Bool("check-block-proof", true, "check signedBlsKeys trigger")
-	checkValidatorSet := fs.Bool("check-validator-set", true, "check validator set trigger")
+	checkBlockProof := fs.Bool("check-block-proof", true, "check signedBlsKeys metrics")
+	checkValidatorSet := fs.Bool("check-validator-set", true, "check validator set metrics")
+	checkPropose := fs.Bool("check-propose", true, "check propose metrics")
+	checkEndorse := fs.Bool("check-endorse", true, "check endorse metrics")
 	logPath := fs.String("log-path", "", "path to log file to tail")
 	logFromStart := fs.Bool("log-from-start", false, "start reading log from beginning (default: false)")
 	rpcPollInterval := fs.Duration("rpc-poll-interval", time.Second, "poll interval for latest block")
@@ -57,6 +59,8 @@ func runStart(args []string) error {
 		PollInterval: *logPollInterval,
 		Output:       os.Stdout,
 		FromStart:    *logFromStart,
+		CheckPropose: *checkPropose,
+		CheckEndorse: *checkEndorse,
 	})
 	if err != nil {
 		return err
