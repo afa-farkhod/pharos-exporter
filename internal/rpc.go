@@ -124,11 +124,8 @@ func (m *BlockTracker) Start(ctx context.Context) error {
 						break
 					}
 				}
-				if found {
-					fmt.Fprintf(m.cfg.Output, "BLS Exist in BlockProof for %s\n", heightHex)
-				} else {
-					fmt.Fprintf(m.cfg.Output, "BLS None in BlockProof for %s\n", heightHex)
-				}
+				writeBoolMetric(m.cfg.Output, "validator_blockproof_has_bls_key", found)
+				fmt.Fprintf(m.cfg.Output, "validator_blockproof_last_height %d\n", h)
 			}
 
 			if m.cfg.CheckValidatorSet {
@@ -142,11 +139,8 @@ func (m *BlockTracker) Start(ctx context.Context) error {
 						found = true
 					}
 				}
-				if found {
-					fmt.Fprintf(m.cfg.Output, "BLS Exist in ValidatorSet for %s\n", heightHex)
-				} else {
-					fmt.Fprintf(m.cfg.Output, "BLS None in ValidatorSet for %s\n", heightHex)
-				}
+				writeBoolMetric(m.cfg.Output, "validator_validatorset_has_bls_key", found)
+				fmt.Fprintf(m.cfg.Output, "validator_validatorset_last_height %d\n", h)
 			}
 		}
 		lastChecked = latest
@@ -169,6 +163,14 @@ func sleepWithContext(ctx context.Context, d time.Duration) error {
 	case <-t.C:
 		return nil
 	}
+}
+
+func writeBoolMetric(w io.Writer, name string, v bool) {
+	if v {
+		fmt.Fprintf(w, "%s 1\n", name)
+		return
+	}
+	fmt.Fprintf(w, "%s 0\n", name)
 }
 
 func trim0x(s string) string {

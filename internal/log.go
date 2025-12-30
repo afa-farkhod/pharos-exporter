@@ -34,13 +34,6 @@ type LogMetrics struct {
 	lastEndorseUnix int64
 }
 
-type LogMetricsSnapshot struct {
-	ProposeTotal           uint64
-	LastProposeTimestamp   int64
-	EndorseTotalByProposer map[string]uint64
-	LastEndorseTimestamp   int64
-}
-
 func NewLogTailer(cfg LogTailerConfig) (*LogTailer, error) {
 	if cfg.Path == "" {
 		return nil, fmt.Errorf("log path is required")
@@ -89,9 +82,8 @@ func (t *LogTailer) Start(ctx context.Context) error {
 		line, err := t.reader.ReadBytes('\n')
 		if len(line) > 0 {
 			lineStr := string(line)
-			t.cfg.Metrics.HandleLine(lineStr)
-			if isTargetLogLine(lineStr) {
-				if _, werr := t.cfg.Output.Write(line); werr != nil {
+			for _, metricLine := range t.cfg.Metrics.UpdateAndFormat(lineStr) {
+				if _, werr := fmt.Fprintln(t.cfg.Output, metricLine); werr != nil {
 					return werr
 				}
 			}
@@ -180,17 +172,16 @@ func inodeFromInfo(info os.FileInfo) (uint64, error) {
 	return stat.Ino, nil
 }
 
-func isTargetLogLine(line string) bool {
-	return strings.Contains(line, "Propose, seq:") || strings.Contains(line, "endorse seq ")
-}
-
-func (m *LogMetrics) HandleLine(line string) {
+func (m *LogMetrics) UpdateAndFormat(line string) []string {
 	ts := parseLogTimestamp(line)
 
 	if strings.Contains(line, "Propose, seq:") {
 		m.proposeTotal++
 		m.lastProposeUnix = ts
-		return
+		return []string{
+			fmt.Sprintf("validator_propose_total %d", m.proposeTotal),
+			fmt.Sprintf("validator_last_propose_timestamp %d", m.lastProposeUnix),
+		}
 	}
 
 	if strings.Contains(line, "endorse seq ") {
@@ -199,20 +190,17 @@ func (m *LogMetrics) HandleLine(line string) {
 			m.endorseTotal[proposer]++
 		}
 		m.lastEndorseUnix = ts
+		if proposer == "" {
+			return []string{
+				fmt.Sprintf("validator_last_endorse_timestamp %d", m.lastEndorseUnix),
+			}
+		}
+		return []string{
+			fmt.Sprintf("validator_endorse_total{proposer=%q} %d", proposer, m.endorseTotal[proposer]),
+			fmt.Sprintf("validator_last_endorse_timestamp %d", m.lastEndorseUnix),
+		}
 	}
-}
-
-func (m *LogMetrics) Snapshot() LogMetricsSnapshot {
-	clone := make(map[string]uint64, len(m.endorseTotal))
-	for k, v := range m.endorseTotal {
-		clone[k] = v
-	}
-	return LogMetricsSnapshot{
-		ProposeTotal:           m.proposeTotal,
-		LastProposeTimestamp:   m.lastProposeUnix,
-		EndorseTotalByProposer: clone,
-		LastEndorseTimestamp:   m.lastEndorseUnix,
-	}
+	return nil
 }
 
 func parseLogTimestamp(line string) int64 {
