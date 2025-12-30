@@ -30,7 +30,7 @@ type LogTailer struct {
 type LogMetrics struct {
 	proposeTotal    uint64
 	lastProposeUnix int64
-	endorseTotal    map[string]uint64
+	endorseTotal    uint64
 	lastEndorseUnix int64
 }
 
@@ -51,9 +51,7 @@ func NewLogTailer(cfg LogTailerConfig) (*LogTailer, error) {
 }
 
 func NewLogMetrics() *LogMetrics {
-	return &LogMetrics{
-		endorseTotal: make(map[string]uint64),
-	}
+	return &LogMetrics{}
 }
 
 func (t *LogTailer) Start(ctx context.Context) error {
@@ -185,18 +183,10 @@ func (m *LogMetrics) UpdateAndFormat(line string) []string {
 	}
 
 	if strings.Contains(line, "endorse seq ") {
-		proposer := parseEndorseProposer(line)
-		if proposer != "" {
-			m.endorseTotal[proposer]++
-		}
+		m.endorseTotal++
 		m.lastEndorseUnix = ts
-		if proposer == "" {
-			return []string{
-				fmt.Sprintf("validator_last_endorse_timestamp %d", m.lastEndorseUnix),
-			}
-		}
 		return []string{
-			fmt.Sprintf("validator_endorse_total{proposer=%q} %d", proposer, m.endorseTotal[proposer]),
+			fmt.Sprintf("validator_endorse_total %d", m.endorseTotal),
 			fmt.Sprintf("validator_last_endorse_timestamp %d", m.lastEndorseUnix),
 		}
 	}
@@ -216,28 +206,4 @@ func parseLogTimestamp(line string) int64 {
 		return time.Now().Unix()
 	}
 	return ts.Unix()
-}
-
-func parseEndorseProposer(line string) string {
-	const key = "proposer "
-	idx := strings.Index(line, key)
-	if idx < 0 {
-		return ""
-	}
-	start := idx + len(key)
-	if start >= len(line) {
-		return ""
-	}
-	end := start
-	for end < len(line) {
-		ch := line[end]
-		if ch == ',' || ch == ' ' || ch == '\n' || ch == '\r' {
-			break
-		}
-		end++
-	}
-	if end <= start {
-		return ""
-	}
-	return line[start:end]
 }
