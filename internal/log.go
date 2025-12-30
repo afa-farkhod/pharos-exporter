@@ -28,17 +28,17 @@ type LogTailer struct {
 }
 
 type LogMetrics struct {
-	proposeTotal       uint64
-	lastProposeUnix    int64
-	endorseTotal       map[string]uint64
-	lastEndorseUnix    int64
+	proposeTotal    uint64
+	lastProposeUnix int64
+	endorseTotal    map[string]uint64
+	lastEndorseUnix int64
 }
 
 type LogMetricsSnapshot struct {
-	ProposeTotal            uint64
-	LastProposeTimestamp    int64
-	EndorseTotalByProposer  map[string]uint64
-	LastEndorseTimestamp    int64
+	ProposeTotal           uint64
+	LastProposeTimestamp   int64
+	EndorseTotalByProposer map[string]uint64
+	LastEndorseTimestamp   int64
 }
 
 func NewLogTailer(cfg LogTailerConfig) (*LogTailer, error) {
