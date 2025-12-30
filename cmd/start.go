@@ -104,7 +104,7 @@ func runStart(args []string) error {
 
 func resolvePublicIP() string {
 	client := &http.Client{Timeout: 2 * time.Second}
-	resp, err := client.Get("https://ifconfig.me")
+	resp, err := client.Get("https://ifconfig.me/ip")
 	if err == nil {
 		defer resp.Body.Close()
 		b, rerr := io.ReadAll(resp.Body)
