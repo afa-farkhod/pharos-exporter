@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,8 +14,8 @@ import (
 
 	"pharos-exporter/internal"
 
-	"golang.org/x/sync/errgroup"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"golang.org/x/sync/errgroup"
 )
 
 func runStart(args []string) error {
@@ -74,6 +76,7 @@ func runStart(args []string) error {
 		return tailer.Start(gctx)
 	})
 
+	log.Printf("Metrics exposed at http://%s:%s/metrics", resolveLocalIP(), *exporterPort)
 	server := &http.Server{
 		Addr:    ":" + *exporterPort,
 		Handler: promhttp.Handler(),
@@ -96,4 +99,38 @@ func runStart(args []string) error {
 		return err
 	}
 	return nil
+}
+
+func resolveLocalIP() string {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return "127.0.0.1"
+	}
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil {
+				continue
+			}
+			ip = ip.To4()
+			if ip == nil || ip.IsLoopback() {
+				continue
+			}
+			return ip.String()
+		}
+	}
+	return "127.0.0.1"
 }
