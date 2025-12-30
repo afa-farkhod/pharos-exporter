@@ -95,6 +95,8 @@ func (m *BlockTracker) Start(ctx context.Context) error {
 
 	var lastVoteInclusionTs int64
 	var lastActiveTs int64
+	var voteInclusionTotal uint64
+	var activeTotal uint64
 
 	for {
 		latestHex, err := fetchBlockNumber(m.cfg.RPCURL)
@@ -129,8 +131,9 @@ func (m *BlockTracker) Start(ctx context.Context) error {
 				}
 				if found {
 					lastVoteInclusionTs = time.Now().Unix()
+					voteInclusionTotal++
 				}
-				writeBoolMetric(m.cfg.Output, "validator_vote_inclusion_status", found)
+				fmt.Fprintf(m.cfg.Output, "validator_vote_inclusion_total %d\n", voteInclusionTotal)
 				fmt.Fprintf(m.cfg.Output, "validator_vote_inclusion_timestamp %d\n", lastVoteInclusionTs)
 			}
 
@@ -147,8 +150,9 @@ func (m *BlockTracker) Start(ctx context.Context) error {
 				}
 				if found {
 					lastActiveTs = time.Now().Unix()
+					activeTotal++
 				}
-				writeBoolMetric(m.cfg.Output, "validator_active_status", found)
+				fmt.Fprintf(m.cfg.Output, "validator_active_total %d\n", activeTotal)
 				fmt.Fprintf(m.cfg.Output, "validator_active_timestamp %d\n", lastActiveTs)
 			}
 		}
