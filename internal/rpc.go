@@ -117,6 +117,16 @@ func (m *BlockTracker) Start(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("parse latest block number failed: %w", err)
 		}
+		
+		// address balance (ETH) once per poll tick
+		if m.address != "" {
+			eth, err := fetchBalanceETH(m.cfg.RPCURL, m.address)
+			if err != nil {
+				return fmt.Errorf("fetch balance failed: %w", err)
+			}
+			AddressBalanceETH.WithLabelValues(strings.ToLower(m.address)).Set(eth)
+		}
+		
 		if latest <= lastChecked {
 			if err := sleepWithContext(ctx, m.cfg.PollInterval); err != nil {
 				return err
