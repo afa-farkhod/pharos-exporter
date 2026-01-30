@@ -8,6 +8,7 @@ Type=simple
 ExecStart=/usr/local/bin/pharos-exporter start \
   -rpc <https://YOUR_RPC> \
   -my-bls-key <0xYOUR_BLS_KEY> \
+  -my-address <0xYOUR_VALIDATOR_ADDRESS> \
   -log-path <YOUR_LOG_PATH> \
   -exporter-port 9123
 Restart=on-failure
