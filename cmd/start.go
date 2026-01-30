@@ -25,6 +25,7 @@ func runStart(args []string) error {
 
 	rpcURL := fs.String("rpc", "https://atlantic-rpc.dplabs-internal.com/", "JSON-RPC endpoint")
 	myBlsKey := fs.String("my-bls-key", "", "my BLS pubkey (0x...)")
+	myAddress := fs.String("my-address", "", "my EVM address to track balance (0x...)")
 	checkBlockProof := fs.Bool("check-block-proof", true, "check signedBlsKeys metrics")
 	checkValidatorSet := fs.Bool("check-validator-set", true, "check validator set metrics")
 	checkPropose := fs.Bool("check-propose", true, "check propose metrics")
@@ -51,6 +52,7 @@ func runStart(args []string) error {
 	tracker, err := internal.NewBlockTracker(internal.BlockTrackerConfig{
 		RPCURL:            *rpcURL,
 		MyBlsKey:          *myBlsKey,
+		MyAddress:         *myAddress,
 		CheckBlockProof:   *checkBlockProof,
 		CheckValidatorSet: *checkValidatorSet,
 		PollInterval:      *rpcPollInterval,
