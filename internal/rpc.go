@@ -75,20 +75,22 @@ func NewBlockTracker(cfg BlockTrackerConfig) (*BlockTracker, error) {
 		cfg.Output = os.Stdout
 	}
 
+	// address validation + normalization
+	addr := strings.TrimSpace(cfg.MyAddress)
+	if addr != "" {
+		addrLower := strings.ToLower(addr)
+		if !strings.HasPrefix(addrLower, "0x") || len(addrLower) != 42 {
+			return nil, fmt.Errorf("invalid my-address: expected 0x + 40 hex chars")
+		}
+		addr = addrLower
+	}
+
 	m := &BlockTracker{
 		cfg:           cfg,
 		normalizedKey: normalizeBlsKey(cfg.MyBlsKey),
 		address:       addr,
 	}
 	return m, nil
-
-	addr := strings.TrimSpace(cfg.MyAddress)
-	if addr != "" {
-		// minimal validation
-		if !strings.HasPrefix(strings.ToLower(addr), "0x") || len(addr) != 42 {
-			return nil, fmt.Errorf("invalid my-address: expected 0x + 40 hex chars")
-		}
-	}
 }
 
 func (m *BlockTracker) Start(ctx context.Context) error {
